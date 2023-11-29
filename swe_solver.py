@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Oct 31 08:50:47 2022
-#
-@author: mhrast
-"""
+"""Created on Mon Oct 31 08:50:47 2022 @author: mhrast."""
 # SHALLOW WATER MODEL
 # Copyright (c) 2017 by Paul Connolly
 #
@@ -51,22 +46,26 @@ SEA_MOUNT = 4
 # SECTION 1: Configuration
 # ------------------------------------------------------------------
 
-print('0. Initializing configuration...')
+print("0. Initializing configuration...")
 g = 9.81              # Acceleration due to gravity (m/s2)
+
 f = 1e-4              # Coriolis parameter (s-1)
 # f = 0.
+
 beta = 1.6e-11        # Meridional gradient of f (s-1m-1)
 # beta = 0.
 # beta = 5e-10
 # beta = 2.5e-11
 
 dt_mins = 1.                # Timestep (minutes)
+
 output_interval_mins = 60.  # Time between outputs (minutes)
+
 forecast_length_days = 4.   # Total simulation length (days)
 
-orography = EARTH_OROGRAPHY
 initial_conditions = UNIFORM_WESTERLY
-initially_geostrophic = True    # Can be "True" or "False"
+orography = EARTH_OROGRAPHY
+initially_geostrophic = True     # Can be "True" or "False"
 add_random_height_noise = False  # Can be "True" or "False"
 
 # If you change the number of gridpoints then orography=EARTH_OROGRAPHY
@@ -75,7 +74,7 @@ nx = 254  # Number of zonal gridpoints
 ny = 50   # Number of meridional gridpoints
 
 dx = 100.0e3  # Zonal grid spacing (m)
-dy = dx       # Meridional grid spacing
+dy = dx       # Meridional grid spacing (m)
 
 # Specify the range of heights to plot in metres
 plot_height_range = np.array([9500., 10500.])
@@ -84,16 +83,18 @@ plot_height_range = np.array([9500., 10500.])
 # SECTION 2: Act on the configuration information
 # ------------------------------------------------------------------
 
-dt = dt_mins*60.0                                    # Timestep (s)
-output_interval = output_interval_mins*60.0          # Time between outputs (s)
-forecast_length = forecast_length_days*24.0*3600.0   # Forecast length (s)
-nt = int(np.fix(forecast_length/dt)+1)               # Number of timesteps
-timesteps_between_outputs = np.fix(output_interval/dt)
-noutput = int(np.ceil(nt/timesteps_between_outputs))  # Number of output frames
+dt = dt_mins * 60.0                                  # Timestep (s)
+output_interval = output_interval_mins * 60.0        # Time between outputs (s)
+forecast_length = forecast_length_days * 24.0 * 3600.0   # Forecast length (s)
 
-x = np.mgrid[0:nx]*dx       # Zonal distance coordinate (m)
-y = np.mgrid[0:ny]*dy       # Meridional distance coordinate (m)
-[Y, X] = np.meshgrid(y, x)  # Create matrices of the coordinate variables
+nt = int(np.fix(forecast_length / dt) + 1)               # Number of timesteps
+timesteps_between_outputs = np.fix(output_interval / dt)
+noutput = int(np.ceil(nt /
+                      timesteps_between_outputs))    # Number of output frames
+
+x = np.mgrid[0:nx] * dx       # Zonal distance coordinate (m)
+y = np.mgrid[0:ny] * dy       # Meridional distance coordinate (m)
+Y, X = np.meshgrid(y, x)  # Create matrices of the coordinate variables
 
 
 # Create the orography field "H"
@@ -115,13 +116,13 @@ elif orography == SEA_MOUNT:
                      + (Y - 0.5 * np.mean(y))**2) / (2 * std_mountain**2))
 
 elif orography == EARTH_OROGRAPHY:
-    mat_contents = sio.loadmat('digital_elevation_map.mat')
-    H = mat_contents['elevation']
+    mat_contents = sio.loadmat("digital_elevation_map.mat")
+    H = mat_contents["elevation"]
     # Enforce periodic boundary conditions in x
     H[[0, -1], :] = H[[-2, 1], :]
 
 else:
-    print('Don''t know what to do with orography=' + np.num2str(orography))
+    print("Don't know what to do with orography=" + np.num2str(orography))
     sys.exit()
 
 
@@ -140,12 +141,12 @@ elif initial_conditions == ZONAL_JET:
     height = 10000. - 400. * np.tanh(20.0 * ((Y - np.mean(y))/np.max(y)))
 
 elif initial_conditions == REANALYSIS:
-    mat_contents = sio.loadmat('reanalysis.mat')
-    pressure = mat_contents['pressure']
-    height = 0.99*pressure/g
+    mat_contents = sio.loadmat("reanalysis.mat")
+    pressure = mat_contents["pressure"]
+    height = 0.99 * pressure / g
 
 elif initial_conditions == GAUSSIAN_BLOB:
-    std_blob = 8.0*dy  # Standard deviation of blob (m)
+    std_blob = 8.0 * dy  # Standard deviation of blob (m)
     height = 9750. + 1000. * np.exp(-((X - 0.25*np.mean(x))**2
                                     + (Y - np.mean(y))**2)/(2 * std_blob**2))
 
@@ -156,7 +157,7 @@ elif initial_conditions == STEP:
 
 elif initial_conditions == CYCLONE_IN_WESTERLY:
     mean_wind_speed = 20.  # m/s
-    std_blob = 7.0*dy  # Standard deviation of blob (m)
+    std_blob = 7.0 * dy  # Standard deviation of blob (m)
     height = 10000. - (mean_wind_speed*f/g) * (Y - np.mean(y)) \
         - 500. * np.exp(-((X - 0.5*np.mean(x))**2
                         + (Y - np.mean(y))**2)/(2 * std_blob**2))
@@ -167,7 +168,7 @@ elif initial_conditions == CYCLONE_IN_WESTERLY:
 
 elif initial_conditions == SHARP_SHEAR:
     mean_wind_speed = 50.  # m/s
-    height = (mean_wind_speed*f/g) * np.abs(Y-np.mean(y))
+    height = (mean_wind_speed * f / g) * np.abs(Y - np.mean(y))
     height = 10000. + height - np.mean(height[:])
 
 else:
@@ -187,14 +188,18 @@ v = np.zeros((nx, ny))
 # instability
 if add_random_height_noise:
     r, c = np.shape(height)
-    height = height + 1.0*np.random.randn(r, c) * (dx/1.0e5) * (np.abs(F)/1e-4)
+    height += 1.0 * np.random.randn(r, c) * (dx/1.0e5) * (np.abs(F) / 1e-4)
 
 
 if initially_geostrophic:
     # Centred spatial differences to compute geostrophic wind
     # ug = -g/f * dz/dy, vg = g/f * dz/dx
-    u[:, 1:-1] = -(0.5*g/(F[:, 1:-1])) * (height[:, 2:]-height[:, 0:-2]) / dy
-    v[1:-1, :] = (0.5*g/(F[1:-1, :])) * (height[2:, :]-height[0:-2, :]) / dx
+    u[:, 1:-1] = -(0.5 * g / (F[:, 1:-1])) * \
+        (height[:, 2:] - height[:, 0:-2]) / dy
+
+    v[1:-1, :] = (0.5 * g / (F[1:-1, :])) * \
+        (height[2:, :] - height[0:-2, :]) / dx
+
     # Zonal wind is periodic so set u(1) and u(end) as dummy points that
     # replicate u(end-1) and u(2), respectively
     u[[0, -1], :] = u[[1, -2], :]
@@ -229,22 +234,22 @@ i_save = 0
 # SECTION 3: Main loop
 # ------------------------------------------------------------------
 print()
-print('1. Initializing main loop...')
+print("1. Initializing main loop...")
 print()
 for n in range(0, nt):
     # Every fixed number of timesteps we store the fields
     if np.mod(n, timesteps_between_outputs) == 0:
 
-        max_u = np.sqrt(np.max(u[:]*u[:] + v[:]*v[:]))
+        max_u = np.sqrt(np.max(u[:] * u[:] + v[:] * v[:]))
 
         print("Time = %.2f hours (max %.2f); max(|u|) = %.2f"
-              % ((n)*dt/3600., forecast_length_days*24., max_u))
+              % (n * dt / 3600., forecast_length_days * 24., max_u))
 
         u_save[:, :, i_save] = u
         v_save[:, :, i_save] = v
         h_save[:, :, i_save] = h
         vorticity_save[:, :, i_save] = vorticity
-        t_save[i_save] = (n)*dt
+        t_save[i_save] = n * dt
         i_save += 1
 
     # Compute the accelerations
@@ -254,12 +259,12 @@ for n in range(0, nt):
         - (g/(2.*dy)) * (H[1:-1, 2:] - H[1:-1, 0:-2])
 
     # Compute the vorticity
-    vorticity[1:-1, 1:-1] = (1./dy)*(u[1:-1, 0:-2]-u[1:-1, 2:]) \
-        + (1./dx)*(v[2:, 1:-1]-v[0:-2, 1:-1])
+    vorticity[1:-1, 1:-1] = (1. / dy)*(u[1:-1, 0:-2] - u[1:-1, 2:]) \
+        + (1. / dx) * (v[2:, 1:-1] - v[0:-2, 1:-1])
 
     # Call the Lax-Wendroff scheme to move forward one timestep
-    (unew, vnew, h_new) = lax_wendroff(dx, dy, dt,
-                                       g, u, v, h, u_accel, v_accel)
+    unew, vnew, h_new = lax_wendroff(dx, dy, dt,
+                                     g, u, v, h, u_accel, v_accel)
 
     # Update the wind and height fields, taking care to enforce
     # boundary conditions
@@ -306,21 +311,26 @@ print()
 # a shallow water model. Press space to pause and use the arrow keys
 # to change between single frames.
 
-rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica'], 'size': 22})
+# rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica'],
+#    'size': 22})
 # # for Palatino and other serif fonts use:
 # rc('font',**{'family':'serif','serif':['Palatino']})
-rc('text', usetex=True)
+# rc('text', usetex=True)
 
 
-fig = plt.figure(figsize=(16, 12), dpi=80)
+fig = plt.figure(figsize=(16, 12), dpi=100)
 ax1 = fig.add_subplot(211)
 ax2 = fig.add_subplot(212)
+
+title_size = 18
+label_size = 14
+cbar_size = 14
 
 ax1.autoscale(enable=True, axis='y', tight=True)
 
 # Axis units are thousands of kilometers (x and y are in metres)
-x_1000km = x * 1.e-6
-y_1000km = y * 1.e-6
+x_1000km = x * 1e-6
+y_1000km = y * 1e-6
 
 # Set colormap to have 64 entries
 ncol = 64
@@ -337,29 +347,29 @@ else:
     height_title = 'Height (m)'
 
 
-print('Maximum orography height = %.2f m' % np.max(H[:]))
-u = np.squeeze(u_save[:, :, 0])
-vorticity = np.zeros(np.shape(u))
+print('Maximum orography height = %.2f m' % np.max(H))
 
 # Extract the height and velocity components for this frame
 h = np.squeeze(h_save[:, :, 0])
 u = np.squeeze(u_save[:, :, 0])
 v = np.squeeze(v_save[:, :, 0])
+vorticity = np.squeeze(vorticity_save[:, :, 0])
 
 # Compute the vorticity omega = du/dy - dv/dx
-vorticity[1:-1, 1:-1] = (u[1:-1, 0:-2] - u[1:-1, 2:]) / dy \
-    + (v[2:, 1:-1] - v[0:-2, 1:-1]) / dx
-# First plot the height field
+# vorticity[1:-1, 1:-1] = (u[1:-1, 0:-2] - u[1:-1, 2:]) / dy \
+#                      + (v[2:, 1:-1] - v[0:-2, 1:-1]) / dx
 
+# cmap="jet"
 
 # Plot the height field
-im = ax1.imshow(np.transpose(h+H) * height_scale,
-                extent=[np.min(x_1000km), np.max(x_1000km),
-                np.min(y_1000km), np.max(y_1000km)],
-                cmap='jet', origin='lower')
+im1 = ax1.imshow(np.transpose(h + H) * height_scale,
+                 extent=[np.min(x_1000km), np.max(x_1000km),
+                 np.min(y_1000km), np.max(y_1000km)],
+                 cmap="seismic", origin="lower")
+
 # Set other axes properties and plot a colorbar
-cb1 = fig.colorbar(im, ax=ax1)
-cb1.set_label('height (km)')
+cb1 = fig.colorbar(im1, ax=ax1)
+cb1.set_label("height (km)", fontsize=cbar_size)
 # Contour the terrain:
 
 # This code line removes the warning message when the orography is flat
@@ -372,32 +382,41 @@ cs = ax1.contour(x_1000km, y_1000km, np.transpose(H),
 cs2 = ax2.contour(x_1000km, y_1000km, np.transpose(H),
                   levels=range(1, 11001, 1000), colors='k')
 
+quiver_scale = 1
+
 # Plot the velocity vectors
 Q = ax1.quiver(x_1000km[2::interval], y_1000km[2::interval],
                np.transpose(u[2::interval, 2::interval]),
                np.transpose(v[2::interval, 2::interval]),
-               scale=6e1, scale_units='xy', pivot='mid')
+               angles='xy', scale_units='xy', scale=1e2, pivot='tip',
+               headlength=5*quiver_scale, headwidth=3*quiver_scale,
+               headaxislength=4.5*quiver_scale, width=1.3e-3)
+
 # pivot='tail', scale=5e2
-ax1.set_ylabel('Y distance ($10^3$ km)')
-ax1.set_title(height_title)
-tx1 = ax1.text(0, np.max(y_1000km), 'Time = %.1f hours'
-               % (t_save[0]/3600.))
+ax1.set_xlabel("X distance ($10^3$ km)", fontsize=label_size)
+ax1.set_ylabel("Y distance ($10^3$ km)", fontsize=label_size)
+ax1.set_title(height_title, fontsize=title_size)
+tx1 = ax1.text(0, np.max(y_1000km)*1.02, "Time = %.1f hours"
+               % (np.squeeze(t_save[0]) / 3600.))
 
 # Now plot the vorticity
+# np.transpose(vorticity)
 im2 = ax2.imshow(np.transpose(vorticity),
                  extent=[np.min(x_1000km), np.max(x_1000km),
                  np.min(y_1000km), np.max(y_1000km)],
-                 cmap='jet', origin='lower')
+                 cmap="seismic", origin="lower")
+
 # Set other axes properties and plot a colorbar
 cb2 = fig.colorbar(im2, ax=ax2)
-cb2.set_label('vorticity (s$^{-1}$)')
-ax2.set_xlabel('X distance ($10^3$ of km)')
-ax2.set_ylabel('Y distance ($10^3$ of km)')
-ax2.set_title('Relative vorticity (s$^{-1}$)')
-tx2 = ax2.text(0, np.max(y_1000km), 'Time = %.1f hours'
-               % (t_save[0]/3600.))
+cb2.set_label("vorticity (s$^{-1}$)", fontsize=cbar_size)
 
-im.set_clim((plot_height_range * height_scale))
+ax2.set_xlabel("X distance ($10^3$ km)", fontsize=label_size)
+ax2.set_ylabel("Y distance ($10^3$ km)", fontsize=label_size)
+ax2.set_title("Relative vorticity (s$^{-1}$)", fontsize=title_size)
+tx2 = ax2.text(0, np.max(y_1000km)*1.02, "Time = %.1f hours"
+               % (np.squeeze(t_save[0])/3600.))
+
+im1.set_clim((plot_height_range * height_scale))
 im2.set_clim((-3e-4, 3e-4))
 ax1.axis((0., np.max(x_1000km), 0., np.max(y_1000km)))
 ax2.axis((0., np.max(x_1000km), 0., np.max(y_1000km)))
@@ -410,6 +429,12 @@ ani_running = True
 
 
 def update_time():
+    """Yield the frame number based on the maximum output of time steps.
+
+    Returns
+    -------
+    t : iterator object
+    """
     t = 0
     t_max = noutput
     while t < t_max - 1:
@@ -418,16 +443,25 @@ def update_time():
 
 
 def on_press(event):
+    """Allow the animation to be paused and fast-forwarded or rewinded.
+
+    Use the space key to pause the animation and the left/right arrow keys
+    to fast-forward/rewind the animation.
+
+    Returns
+    -------
+    None
+    """
     if event.key.isspace():
         if ani.running:
-            # ani.event_source.stop()
             ani.pause()
         else:
-            # ani.event_source.start()
             ani.resume()
         ani.running ^= True
+
     elif event.key == 'left':
         ani.direction = -1
+
     elif event.key == 'right':
         ani.direction = 1
 
@@ -439,7 +473,18 @@ def on_press(event):
 
 
 def update_plot(it):
+    """Update the figure for matplotlib's FuncAnimation.
 
+    Parameters
+    ----------
+    it : integer
+        number of frame
+
+    Returns
+    -------
+    im1, im2, cs, cs2, tx1, tx2, Q, : matplotlib objects
+        The objects required to update the plot
+    """
     # Extract the height and velocity components for this frame
     h = np.squeeze(h_save[:, :, it])
     u = np.squeeze(u_save[:, :, it])
@@ -451,36 +496,59 @@ def update_plot(it):
     #    + (1./dx)*(v[2:, 1:-1]-v[0:-2, 1:-1])
 
     # top plot:
-    im.set_data(np.transpose(H+h) * height_scale)
+    im1.set_data(np.transpose(H + h) * height_scale)
 
-    cs.set_array(np.transpose(h))
-    cs2.set_array(np.transpose(h))
+    # CAUTION! set_array() does not work anymore! Contour has to be drawn
+    # new each time the plot updates
+
+    # cs.set_array(np.transpose(h))
+    # cs2.set_array(np.transpose(h))
+
+    global cs, cs2
+
+    # for i in cs.collections:
+    #    i.remove()
+
+    #cs.remove()
+    #cs = ax1.contour(x_1000km, y_1000km, np.transpose(h),
+                     #levels=range(1, 11001, 1000), colors='k')
+
+    # for i in cs2.collections:
+    #    i.remove()
+
+    #cs2.remove()
+    #cs2 = ax2.contour(x_1000km, y_1000km, np.transpose(h),
+                      #levels=range(1, 11001, 1000), colors='k')
+
     Q.set_UVC(np.transpose(u[2::interval, 2::interval]),
               np.transpose(v[2::interval, 2::interval]))
-    tx1.set_text('Time = %.1f hours' % (t_save[it]/3600.))
+    tx1.set_text('Time = %.1f hours' % (np.squeeze(t_save[it])/3600.))
 
     # bottom plot:
     im2.set_data(np.transpose(vorticity))
-    tx2.set_text('Time = %.1f hours' % (t_save[it]/3600.))
+    tx2.set_text('Time = %.1f hours' % (np.squeeze(t_save[it])/3600.))
 
-    im.set_clim((plot_height_range * height_scale))
+    im1.set_clim((plot_height_range * height_scale))
     im2.set_clim((-3e-4, 3e-4))
     ax1.axis((0., np.max(x_1000km), 0., np.max(y_1000km)))
     ax2.axis((0., np.max(x_1000km), 0., np.max(y_1000km)))
 
-    return im, im2, Q, cs, cs2, tx1, tx2,
+    return im1, im2, tx1, tx2, Q,
 
 
 fig.canvas.mpl_connect('key_press_event', on_press)
 
 # Setting frames to the size of the vector removes the IndexError in console
 # 60 Hz monitor => 0.0167 s = 167 ms interval
+
 ani = animation.FuncAnimation(fig, update_plot, frames=update_time,
                               interval=167, repeat_delay=1000,
                               cache_frame_data=False)
 
 ani.running = True
 ani.direction = 1
+print()
+print("Successfully finished")
 plt.show()
 
 # possibility to provide (254, 50) data of elevation or pressure map
