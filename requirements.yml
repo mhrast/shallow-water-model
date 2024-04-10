@@ -1,0 +1,10 @@
+name: shallow-water-model
+channels:
+  - conda-forge
+dependencies:
+  - mamba=1.4.9
+  - matplotlib=3.8.2
+  - numpy=1.26.2
+  - pysimplegui=4.60.5
+  - python=3.10.13
+  - scipy=1.11.4
