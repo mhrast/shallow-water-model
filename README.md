@@ -1,5 +1,7 @@
 # Shallow Water Model
 
+![shallow-water-model](https://github.com/mhrast/shallow-water-model/assets/114399381/ba854280-9ace-4f51-9c48-8f01d9b88e6f)
+
 This Python program is able to solve the shallow water equations ([Wikipedia](https://en.wikipedia.org/wiki/Shallow_water_equations)) in conservative form in a channel around Earth between 20°N and 70°N with a spatial resolution of 100 km (around 1°, default 254x50 grid points). The shallow water equations describe the flow below a pressure surface in a fluid and can be used to understand atmospheric motions of air in a simplified manner. The program uses the Lax-Wendroff method to numerically solve the underlying hyperbolical partial differential equations. The three prognostic variables are the two wind speeds $`u`$ in x direction and $`v`$ in y direction, and the depth of the fluid layer $`h`$ above a constant topology $`H`$.
 
 The domain is periodic in the x direction and has solid north and south boundaries where $`v=0`$ and $`h`$ is fixed at its initial values. The domain size
